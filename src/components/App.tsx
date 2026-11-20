@@ -1,5 +1,5 @@
 // React Imports
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 // Component Imports
 import Editor from "./Editor";
 // Other Imports
@@ -20,19 +20,18 @@ function App() {
 	const [html, setHtml] = useLocalStorage("html", initialHtmlContent);
 	const [css, setCss] = useLocalStorage("css", initialCssContent);
 	const [js, setJs] = useLocalStorage("js", initialJsContent);
-	const [srcDoc, setSrcDoc] = useState("");
+	const [srcDoc, setSrcDoc] = useState<string>("");
 
-	const [showIframe, setShowIframe] = useState(false);
-	const timerRef = useRef(null);
-	const iframeRef = useRef(null);
+	const [showIframe, setShowIframe] = useState<boolean>(false);
+	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
 	// To set the height of the body of iframe to 100vh by default
 	const handleIframeLoad = () => {
 		const iframe = iframeRef.current;
 		if (iframe) {
-			const iframeDocument =
-				iframe.contentDocument || iframe.contentWindow.document;
-			iframeDocument.body.style.height = "100vh";
+			const iframeDocument = iframe.contentDocument;
+			if (iframeDocument?.body) iframeDocument.body.style.height = "100vh";
 		}
 	};
 
@@ -48,7 +47,9 @@ function App() {
       `);
 		}, 250);
 
-		return () => clearTimeout(timerRef.current);
+		return () => {
+			if (timerRef.current) clearTimeout(timerRef.current);
+		};
 	}, [html, css, js]);
 
 	const handleTopPaneAnimationEnd = () => setShowIframe(true);

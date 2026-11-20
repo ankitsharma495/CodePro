@@ -2,8 +2,8 @@ import "./CircularLoader.scss";
 
 const CircularLoader = () => {
 	return (
-		<div class="loader-container">
-			<div class="loader"></div>
+		<div className="loader-container">
+			<div className="loader"></div>
 			<p>Please wait, setting up the simulator</p>
 		</div>
 	);

@@ -1,5 +1,5 @@
 // React Imports
-import React, { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 // CodeMirror & its Plugin Imports
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
@@ -18,61 +18,57 @@ import {
 // Other Imports
 import { EXTENSION_MAP, INITIAL_CONTENT_MAP } from "../constants";
 import { testUserAgentForMobileDevice } from "../utilities/utilFunctions";
+import type { EditorLanguage } from "../types/editor";
 
 // Language configuration for CodeMirror component based on langauage
 const LANG_CONFIG_MAP = {
 	javascript: [javascript({ jsx: true })],
 	html: [html({})],
-	css: [css({})],
+	css: [css()],
 };
 
-export default function Editor(props) {
+interface EditorProps {
+	language: EditorLanguage;
+	displayName: string;
+	value: string;
+	onChange: (value: string) => void;
+	animationQueue: number;
+}
+
+// Each pane keeps its CodeMirror instance; memo skips updates when a sibling pane changes.
+export default memo(function Editor(props: EditorProps) {
 	const { language, displayName, value, onChange, animationQueue } = props;
 
 	// Create a BLOB file for making the content in the editor downloadable
 	const file = new Blob([value], { type: `text/${EXTENSION_MAP[language]}` });
 
-	const [isMobile, setIsMobile] = useState(false);
+	const [isMobile] = useState(testUserAgentForMobileDevice);
 	// state to collapse/expand editor
-	const [openEditor, setOpenEditor] = useState(!isMobile);
+	const [openEditor, setOpenEditor] = useState(() => !isMobile);
 	// state to show toolbar button's icons on hover or show always
-	const [toolBarButtonsHover, setToolBarButtonsHover] = useState(isMobile);
+	const [toolBarButtonsHover, setToolBarButtonsHover] = useState(
+		() => isMobile,
+	);
 	// state to open/close reset dropdown
 	const [showResetDropdown, setShowResetDropdown] = useState(false);
 
-	// Detecting whether device type is mobile or not using user-agent
 	useEffect(() => {
-		setIsMobile(testUserAgentForMobileDevice());
-	}, []);
-
-	useEffect(() => {
-		// Event listener to close reset button dropdown on click on window
-		window.addEventListener("click", (e) => {
-			// If click is on reset button - do nothing as we already open it on the onClick prop of the button
-			if (e.target.id === "reset-button") {
+		const handleWindowClick = (event: MouseEvent) => {
+			const target = event.target;
+			if (
+				target instanceof Element &&
+				!target.closest("#reset-button, #reset-dropdown")
+			) {
+				setShowResetDropdown(false);
 			}
-			// All other clicks - close the dropdown
-			else setShowResetDropdown(false);
-		});
-
-		// Remove event listeners and clear timeout on component unmount to avoid stack overflow
-		return () => {
-			window.removeEventListener("click", (e) => {
-				if (e.target.id === "reset-button") {
-				} else setShowResetDropdown(false);
-			});
 		};
-		// eslint-disable-next-line
-	}, []);
 
-	// Whenever device size changes, we want the editor configs to get affected
-	useEffect(() => {
-		setOpenEditor(!isMobile);
-		setToolBarButtonsHover(isMobile);
-	}, [isMobile]);
+		window.addEventListener("click", handleWindowClick);
+		return () => window.removeEventListener("click", handleWindowClick);
+	}, []);
 
 	// Functions to manipulate the content of editor
-	const handleChange = (value, viewUpdate) => onChange(value);
+	const handleChange = (nextValue: string) => onChange(nextValue);
 
 	const handleResetEditor = () => onChange(INITIAL_CONTENT_MAP[language]);
 
@@ -103,35 +99,10 @@ export default function Editor(props) {
 	// Functions to show/hide dropdown on click - Mobile devices
 	const handleResetButtonClick = () => isMobile && setShowResetDropdown(true);
 
-	const handleDropdownItemClick = (onClick) => {
+	const handleDropdownItemClick = (onClick: () => void) => {
 		onClick();
 		handleOnResetButtonHoverExit();
 	};
-
-	// Reset button dropdown component
-	const DropDown = () => (
-		<div
-			id="reset-dropdown"
-			className={`reset-dropdown ${showResetDropdown ? "expanded" : ""}`}
-			onMouseEnter={handleOnResetButtonHover}
-			onMouseLeave={handleOnResetButtonHoverExit}
-		>
-			<div
-				id="reset-dropdown"
-				className="reset-dropdown-item"
-				onClick={() => handleDropdownItemClick(handleResetEditor)}
-			>
-				Reset Editor
-			</div>
-			<div
-				id="reset-dropdown"
-				className="reset-dropdown-item"
-				onClick={() => handleDropdownItemClick(handleClearEditor)}
-			>
-				Clear Editor
-			</div>
-		</div>
-	);
 
 	return (
 		<div
@@ -159,7 +130,25 @@ export default function Editor(props) {
 								onMouseEnter={handleOnResetButtonHover}
 								onMouseLeave={handleOnResetButtonHoverExit}
 							/>
-							<DropDown />
+							<div
+								id="reset-dropdown"
+								className={`reset-dropdown ${showResetDropdown ? "expanded" : ""}`}
+								onMouseEnter={handleOnResetButtonHover}
+								onMouseLeave={handleOnResetButtonHoverExit}
+							>
+								<div
+									className="reset-dropdown-item"
+									onClick={() => handleDropdownItemClick(handleResetEditor)}
+								>
+									Reset Editor
+								</div>
+								<div
+									className="reset-dropdown-item"
+									onClick={() => handleDropdownItemClick(handleClearEditor)}
+								>
+									Clear Editor
+								</div>
+							</div>
 						</button>
 						<button type="button" className="editor-button">
 							{/* Wrapping img tag with anchor tag with target set to _blank to download the file on click of the icon button */}
@@ -218,4 +207,4 @@ export default function Editor(props) {
 			/>
 		</div>
 	);
-}
+});

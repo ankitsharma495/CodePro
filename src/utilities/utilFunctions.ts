@@ -1,4 +1,4 @@
-export const testUserAgentForMobileDevice = () => {
+export const testUserAgentForMobileDevice = (): boolean => {
 	const userAgent = window.navigator.userAgent;
 	// Simple regex check - for large scale apps, better to use third-party libraries
 	const isMobileDevice =
