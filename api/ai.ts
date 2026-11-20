@@ -17,8 +17,8 @@ interface ValidRequest {
 	selectionContext?: {
 		language: keyof EditorCode;
 		selectedCode: string;
-		issueLevel: "warn" | "error";
-		issueMessage: string;
+		issueLevel?: "warn" | "error";
+		issueMessage?: string;
 	};
 }
 
@@ -98,8 +98,11 @@ function isValidRequest(value: unknown): value is ValidRequest {
 			) ||
 			typeof selection.selectedCode !== "string" ||
 			selection.selectedCode.length > 12_000 ||
-			(selection.issueLevel !== "warn" && selection.issueLevel !== "error") ||
-			typeof selection.issueMessage !== "string"
+			(selection.issueLevel !== undefined &&
+				selection.issueLevel !== "warn" &&
+				selection.issueLevel !== "error") ||
+			(selection.issueMessage !== undefined &&
+				typeof selection.issueMessage !== "string")
 		)
 			return false;
 	}
@@ -125,7 +128,7 @@ function isRateLimited(key: string, now = Date.now()) {
 function buildMessages(request: ValidRequest) {
 	const source = JSON.stringify(request.code);
 	const selection = request.selectionContext
-		? `\n\nSelected ${request.selectionContext.language} code:\n${request.selectionContext.selectedCode}\n\nSelected-code context: ${request.selectionContext.issueLevel}: ${request.selectionContext.issueMessage}`
+		? `\n\nSelected ${request.selectionContext.language} code:\n${request.selectionContext.selectedCode}${request.selectionContext.issueLevel && request.selectionContext.issueMessage ? `\n\nSelected-code context: ${request.selectionContext.issueLevel}: ${request.selectionContext.issueMessage}` : ""}`
 		: "";
 	if (request.action === "explain") {
 		return [

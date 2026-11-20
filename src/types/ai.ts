@@ -36,6 +36,6 @@ export interface AIAssistRequest {
 export interface AISelectionContext {
 	language: keyof EditorCode;
 	selectedCode: string;
-	issueLevel: "warn" | "error";
-	issueMessage: string;
+	issueLevel?: "warn" | "error";
+	issueMessage?: string;
 }

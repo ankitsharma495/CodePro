@@ -48,7 +48,8 @@ export default function AIAssistantPanel({
 					<div>
 						<h2 id="ai-panel-title">AI troubleshooting</h2>
 						<p>
-							{context.language.toUpperCase()} selection · {context.issueLevel}
+							{context.language.toUpperCase()} selection
+							{context.issueLevel ? ` · ${context.issueLevel}` : ""}
 						</p>
 					</div>
 					<button
@@ -60,12 +61,23 @@ export default function AIAssistantPanel({
 					</button>
 				</header>
 				<div className="ai-selection-context">
-					<p>{context.issueMessage}</p>
-					<pre>{context.selectedCode}</pre>
+					{context.issueMessage ? (
+						<p>{context.issueMessage}</p>
+					) : (
+						<p>No preview warning or error captured.</p>
+					)}
+					<pre>
+						{context.selectedCode ||
+							"No line selected. The full project is available for a fix."}
+					</pre>
 				</div>
 				<div className="ai-actions">
-					<button type="button" disabled={isActive} onClick={onExplain}>
-						Explain error
+					<button
+						type="button"
+						disabled={isActive || !context.issueMessage}
+						onClick={onExplain}
+					>
+						Explain issue
 					</button>
 					<button type="button" disabled={isActive} onClick={onSuggestFix}>
 						Suggest fix
@@ -81,7 +93,7 @@ export default function AIAssistantPanel({
 					{state.status === "idle" &&
 						"Ask for an explanation or a suggested code fix."}
 					{state.status === "empty" &&
-						"No preview error captured yet. Run code that produces an error, then choose Explain error."}
+						"Capture a preview warning or error before asking for an explanation."}
 					{state.status === "loading" && "Sending your request…"}
 					{state.status === "streaming" &&
 						`Streaming ${actionLabel(state.action).toLowerCase()}…`}

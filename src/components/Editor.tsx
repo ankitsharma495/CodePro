@@ -74,39 +74,32 @@ export default memo(function Editor(props: EditorProps) {
 		top: number;
 		left: number;
 	} | null>(null);
-	const handleEditorUpdate = useCallback(
-		({ view }: ViewUpdate) => {
-			if (!issue) {
-				setSelectedCode(null);
-				return;
-			}
-			const selection = view.state.selection.main;
-			if (selection.empty) {
-				setSelectedCode(null);
-				return;
-			}
-			const text = view.state.sliceDoc(selection.from, selection.to).trim();
-			const position = view.coordsAtPos(selection.head);
-			const container = editorContainerRef.current;
-			if (!text || !position || !container) {
-				setSelectedCode(null);
-				return;
-			}
-			const bounds = container.getBoundingClientRect();
-			setSelectedCode({
-				code: text,
-				top: Math.max(
-					0,
-					Math.min(position.bottom - bounds.top + 4, bounds.height - 36),
-				),
-				left: Math.max(
-					8,
-					Math.min(position.left - bounds.left, bounds.width - 92),
-				),
-			});
-		},
-		[issue],
-	);
+	const handleEditorUpdate = useCallback(({ view }: ViewUpdate) => {
+		const selection = view.state.selection.main;
+		if (selection.empty) {
+			setSelectedCode(null);
+			return;
+		}
+		const text = view.state.sliceDoc(selection.from, selection.to).trim();
+		const position = view.coordsAtPos(selection.head);
+		const container = editorContainerRef.current;
+		if (!text || !position || !container) {
+			setSelectedCode(null);
+			return;
+		}
+		const bounds = container.getBoundingClientRect();
+		setSelectedCode({
+			code: text,
+			top: Math.max(
+				0,
+				Math.min(position.bottom - bounds.top + 4, bounds.height - 36),
+			),
+			left: Math.max(
+				8,
+				Math.min(position.left - bounds.left, bounds.width - 92),
+			),
+		});
+	}, []);
 
 	useEffect(() => {
 		const handleWindowClick = (event: MouseEvent) => {
@@ -264,7 +257,7 @@ export default memo(function Editor(props: EditorProps) {
 				onChange={handleChange}
 				onUpdate={handleEditorUpdate}
 			/>
-			{issue && selectedCode && (
+			{selectedCode && (
 				<button
 					type="button"
 					className="editor-ai-trigger"
@@ -274,7 +267,7 @@ export default memo(function Editor(props: EditorProps) {
 						onAISelection({
 							language,
 							selectedCode: selectedCode.code,
-							...issue,
+							...(issue ?? {}),
 						})
 					}
 				>

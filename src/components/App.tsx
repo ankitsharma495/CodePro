@@ -185,6 +185,17 @@ function App() {
 		setIsAIPanelOpen(false);
 		setAIContext(null);
 	}, [cancelAIAssist]);
+	const openAIAssistant = useCallback(() => {
+		setAIContext(
+			(current) =>
+				current ?? {
+					language: "javascript",
+					selectedCode: "",
+					...(latestPreviewIssue ?? {}),
+				},
+		);
+		setIsAIPanelOpen(true);
+	}, [latestPreviewIssue]);
 
 	return (
 		<ImagePreloader images={imageSources}>
@@ -205,6 +216,14 @@ function App() {
 						</span>
 						<button type="button" onClick={handleShare}>
 							Share
+						</button>
+						<button
+							type="button"
+							aria-expanded={isAIPanelOpen}
+							aria-controls="ai-assistant-panel"
+							onClick={openAIAssistant}
+						>
+							AI assistant
 						</button>
 						<button
 							type="button"
@@ -389,14 +408,18 @@ function App() {
 							onExplain={() =>
 								aiAssist.run(
 									"explain",
-									`${aiContext.issueLevel}: ${aiContext.issueMessage}`,
+									aiContext.issueMessage
+										? `${aiContext.issueLevel ?? "issue"}: ${aiContext.issueMessage}`
+										: undefined,
 									aiContext,
 								)
 							}
 							onSuggestFix={() =>
 								aiAssist.run(
 									"fix",
-									`${aiContext.issueLevel}: ${aiContext.issueMessage}`,
+									aiContext.issueMessage
+										? `${aiContext.issueLevel ?? "issue"}: ${aiContext.issueMessage}`
+										: undefined,
 									aiContext,
 								)
 							}
