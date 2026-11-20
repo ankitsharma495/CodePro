@@ -161,6 +161,7 @@ a:focus-visible {
 
 .editor-workspace .editor-container {
 	flex: 1 1 0;
+	position: relative;
 	min-width: 0;
 	min-height: 0;
 	margin: 0;
@@ -241,6 +242,23 @@ a:focus-visible {
 
 .editor-workspace .reset-dropdown-item:active {
 	background-color: transparent;
+}
+
+.editor-ai-trigger {
+	position: absolute;
+	z-index: 4;
+	min-height: 1.75rem;
+	padding: 0.25rem 0.55rem;
+	border: 1px solid #f5ca4e;
+	border-radius: 0.35rem;
+	background: #202127;
+	color: #fff;
+	box-shadow: 0 3px 12px rgb(0 0 0 / 35%);
+	cursor: pointer;
+}
+
+.editor-ai-trigger:hover {
+	background: #3a3420;
 }
 
 .pane-resizer {
@@ -382,11 +400,57 @@ a:focus-visible {
 }
 
 .ai-panel {
-	margin: 0.5rem 0.65rem;
 	padding: 0.8rem;
 	border: 1px solid var(--surface-border);
 	border-radius: 0.45rem;
 	background: var(--surface);
+}
+
+.ai-modal-backdrop {
+	position: fixed;
+	z-index: 100;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	padding: 1rem;
+	background: rgb(0 0 0 / 62%);
+}
+
+.ai-modal-dialog {
+	width: min(720px, calc(100vw - 2rem));
+	max-height: min(85vh, 900px);
+	overflow: auto;
+	box-shadow: 0 20px 70px rgb(0 0 0 / 45%);
+}
+
+.ai-modal-loading {
+	position: fixed;
+	z-index: 100;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	background: rgb(0 0 0 / 62%);
+	color: white;
+}
+
+.ai-selection-context {
+	margin-bottom: 0.75rem;
+	padding: 0.65rem;
+	border: 1px solid var(--surface-border);
+	border-radius: 0.35rem;
+}
+
+.ai-selection-context p {
+	margin: 0 0 0.5rem;
+	color: var(--muted);
+}
+
+.ai-selection-context pre {
+	max-height: 7rem;
+	margin: 0;
+	white-space: pre-wrap;
+	word-break: break-word;
+	overflow: auto;
 }
 
 .ai-panel-header,

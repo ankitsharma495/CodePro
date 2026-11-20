@@ -1,11 +1,12 @@
 // React Imports
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 // CodeMirror & its Plugin Imports
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { html } from "@codemirror/lang-html";
 import { css } from "@codemirror/lang-css";
 import { xcodeDark, xcodeLight } from "@uiw/codemirror-theme-xcode";
+import type { ViewUpdate } from "@codemirror/view";
 // Icon Imports
 import {
 	ResetIcon,
@@ -20,6 +21,7 @@ import { EXTENSION_MAP, INITIAL_CONTENT_MAP } from "../constants";
 import { testUserAgentForMobileDevice } from "../utilities/utilFunctions";
 import type { EditorLanguage } from "../types/editor";
 import type { Theme } from "../hooks/useTheme";
+import type { AISelectionContext } from "../types/ai";
 
 // Language configuration for CodeMirror component based on langauage
 const LANG_CONFIG_MAP = {
@@ -36,6 +38,8 @@ interface EditorProps {
 	animationQueue: number;
 	theme: Theme;
 	flexWeight: number;
+	issue?: Pick<AISelectionContext, "issueLevel" | "issueMessage">;
+	onAISelection: (context: AISelectionContext) => void;
 }
 
 // Each pane keeps its CodeMirror instance; memo skips updates when a sibling pane changes.
@@ -48,6 +52,8 @@ export default memo(function Editor(props: EditorProps) {
 		animationQueue,
 		theme,
 		flexWeight,
+		issue,
+		onAISelection,
 	} = props;
 
 	// Create a BLOB file for making the content in the editor downloadable
@@ -62,6 +68,45 @@ export default memo(function Editor(props: EditorProps) {
 	);
 	// state to open/close reset dropdown
 	const [showResetDropdown, setShowResetDropdown] = useState(false);
+	const editorContainerRef = useRef<HTMLDivElement | null>(null);
+	const [selectedCode, setSelectedCode] = useState<{
+		code: string;
+		top: number;
+		left: number;
+	} | null>(null);
+	const handleEditorUpdate = useCallback(
+		({ view }: ViewUpdate) => {
+			if (!issue) {
+				setSelectedCode(null);
+				return;
+			}
+			const selection = view.state.selection.main;
+			if (selection.empty) {
+				setSelectedCode(null);
+				return;
+			}
+			const text = view.state.sliceDoc(selection.from, selection.to).trim();
+			const position = view.coordsAtPos(selection.head);
+			const container = editorContainerRef.current;
+			if (!text || !position || !container) {
+				setSelectedCode(null);
+				return;
+			}
+			const bounds = container.getBoundingClientRect();
+			setSelectedCode({
+				code: text,
+				top: Math.max(
+					0,
+					Math.min(position.bottom - bounds.top + 4, bounds.height - 36),
+				),
+				left: Math.max(
+					8,
+					Math.min(position.left - bounds.left, bounds.width - 92),
+				),
+			});
+		},
+		[issue],
+	);
 
 	useEffect(() => {
 		const handleWindowClick = (event: MouseEvent) => {
@@ -117,6 +162,7 @@ export default memo(function Editor(props: EditorProps) {
 
 	return (
 		<div
+			ref={editorContainerRef}
 			style={{
 				animation: `${animationQueue}s ease-out 0s 1 slideInLeft`,
 				flex: `${flexWeight} 1 0%`,
@@ -216,7 +262,25 @@ export default memo(function Editor(props: EditorProps) {
 				extensions={LANG_CONFIG_MAP[language]}
 				theme={theme === "dark" ? xcodeDark : xcodeLight}
 				onChange={handleChange}
+				onUpdate={handleEditorUpdate}
 			/>
+			{issue && selectedCode && (
+				<button
+					type="button"
+					className="editor-ai-trigger"
+					style={{ top: selectedCode.top, left: selectedCode.left }}
+					onMouseDown={(event) => event.preventDefault()}
+					onClick={() =>
+						onAISelection({
+							language,
+							selectedCode: selectedCode.code,
+							...issue,
+						})
+					}
+				>
+					Ask AI
+				</button>
+			)}
 		</div>
 	);
 });

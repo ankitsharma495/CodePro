@@ -30,4 +30,12 @@ export interface AIAssistRequest {
 	action: AIAssistAction;
 	code: EditorCode;
 	previewError?: string;
+	selectionContext?: AISelectionContext;
+}
+
+export interface AISelectionContext {
+	language: keyof EditorCode;
+	selectedCode: string;
+	issueLevel: "warn" | "error";
+	issueMessage: string;
 }

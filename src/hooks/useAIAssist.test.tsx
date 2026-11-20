@@ -55,6 +55,36 @@ describe("useAIAssist", () => {
 		expect(result.current.state.text).toBe("Missing variable.");
 	});
 
+	it("includes the selected line and warning context in its request", async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(tokenStream("This value is invalid."));
+		vi.stubGlobal("fetch", fetchMock);
+		const { result } = renderHook(() => useAIAssist(code, vi.fn()));
+		const selectionContext = {
+			language: "javascript" as const,
+			selectedCode: "console.warn(missingValue);",
+			issueLevel: "warn" as const,
+			issueMessage: "missingValue is not defined",
+		};
+
+		act(() =>
+			result.current.run(
+				"explain",
+				"warn: missingValue is not defined",
+				selectionContext,
+			),
+		);
+
+		await waitFor(() => expect(result.current.state.status).toBe("success"));
+		expect(
+			JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string),
+		).toMatchObject({
+			selectionContext,
+			previewError: "warn: missingValue is not defined",
+		});
+	});
+
 	it("classifies rate limits and retries the same request", async () => {
 		const fetchMock = vi
 			.fn()

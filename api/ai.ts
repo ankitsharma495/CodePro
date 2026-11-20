@@ -14,6 +14,12 @@ interface ValidRequest {
 	action: AIAssistAction;
 	code: EditorCode;
 	previewError?: string;
+	selectionContext?: {
+		language: keyof EditorCode;
+		selectedCode: string;
+		issueLevel: "warn" | "error";
+		issueMessage: string;
+	};
 }
 
 function jsonResponse(status: number, code: string, message: string) {
@@ -79,6 +85,24 @@ function isValidRequest(value: unknown): value is ValidRequest {
 	) {
 		return false;
 	}
+	if (candidate.selectionContext !== undefined) {
+		if (
+			typeof candidate.selectionContext !== "object" ||
+			candidate.selectionContext === null
+		)
+			return false;
+		const selection = candidate.selectionContext as Record<string, unknown>;
+		if (
+			!(["html", "css", "javascript"] as unknown[]).includes(
+				selection.language,
+			) ||
+			typeof selection.selectedCode !== "string" ||
+			selection.selectedCode.length > 12_000 ||
+			(selection.issueLevel !== "warn" && selection.issueLevel !== "error") ||
+			typeof selection.issueMessage !== "string"
+		)
+			return false;
+	}
 	return true;
 }
 
@@ -100,6 +124,9 @@ function isRateLimited(key: string, now = Date.now()) {
 
 function buildMessages(request: ValidRequest) {
 	const source = JSON.stringify(request.code);
+	const selection = request.selectionContext
+		? `\n\nSelected ${request.selectionContext.language} code:\n${request.selectionContext.selectedCode}\n\nSelected-code context: ${request.selectionContext.issueLevel}: ${request.selectionContext.issueMessage}`
+		: "";
 	if (request.action === "explain") {
 		return [
 			{
@@ -109,7 +136,7 @@ function buildMessages(request: ValidRequest) {
 			},
 			{
 				role: "user",
-				content: `Preview error:\n${request.previewError}\n\nCurrent HTML, CSS, and JavaScript:\n${source}`,
+				content: `Preview issue:\n${request.previewError}\n\nCurrent HTML, CSS, and JavaScript:\n${source}${selection}`,
 			},
 		];
 	}
@@ -121,7 +148,7 @@ function buildMessages(request: ValidRequest) {
 		},
 		{
 			role: "user",
-			content: `Preview error (if any):\n${request.previewError ?? "None provided"}\n\nCurrent HTML, CSS, and JavaScript:\n${source}`,
+			content: `Preview issue (if any):\n${request.previewError ?? "None provided"}\n\nCurrent HTML, CSS, and JavaScript:\n${source}${selection}`,
 		},
 	];
 }

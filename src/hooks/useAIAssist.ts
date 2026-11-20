@@ -5,6 +5,7 @@ import type {
 	AIAssistRequest,
 	AIAssistState,
 	AIFixSuggestion,
+	AISelectionContext,
 } from "../types/ai";
 import type { EditorCode } from "../types/editor";
 
@@ -225,7 +226,11 @@ export default function useAIAssist(
 	}, []);
 
 	const run = useCallback(
-		(action: AIAssistAction, previewError?: string) => {
+		(
+			action: AIAssistAction,
+			previewError?: string,
+			selectionContext?: AISelectionContext,
+		) => {
 			if (abortController.current) return;
 			if (Date.now() - lastStartedAt.current < 500) return;
 			if (action === "explain" && !previewError?.trim()) {
@@ -237,7 +242,12 @@ export default function useAIAssist(
 				return;
 			}
 			lastStartedAt.current = Date.now();
-			const request: AIAssistRequest = { action, code, previewError };
+			const request: AIAssistRequest = {
+				action,
+				code,
+				previewError,
+				selectionContext,
+			};
 			previousRequest.current = request;
 			void execute(request);
 		},

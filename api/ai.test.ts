@@ -29,6 +29,24 @@ describe("Vercel AI proxy", () => {
 		expect(await response.json()).toMatchObject({ error: { code: "empty" } });
 	});
 
+	it("rejects invalid selected-code context", async () => {
+		const response = await handleAIRequest(
+			post(
+				{
+					...requestBody,
+					selectionContext: {
+						language: "javascript",
+						selectedCode: "x".repeat(12_001),
+						issueLevel: "error",
+						issueMessage: "ReferenceError",
+					},
+				},
+				"proxy-invalid-selection-test",
+			),
+		);
+		expect(response.status).toBe(400);
+	});
+
 	it("streams Groq completion tokens without exposing provider credentials", async () => {
 		vi.stubEnv("AI_PROVIDER", "groq");
 		vi.stubEnv("GROQ_API_KEY", "unit-test-key");

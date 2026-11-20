@@ -4,6 +4,7 @@ import {
 	Suspense,
 	useCallback,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from "react";
@@ -19,6 +20,7 @@ import { encodeShareLink, decodeShareHash } from "../services/shareLink";
 import { imageSources } from "../assets/images";
 import ImagePreloader from "../utilities/ImagePreloader";
 import type { EditorCode } from "../types/editor";
+import type { AISelectionContext } from "../types/ai";
 
 const AIAssistantPanel = lazy(() => import("./AIAssistantPanel"));
 
@@ -33,6 +35,7 @@ function App() {
 	const [shareError, setShareError] = useState("");
 	const [shareUrl, setShareUrl] = useState("");
 	const [isAIPanelOpen, setIsAIPanelOpen] = useState(false);
+	const [aiContext, setAIContext] = useState<AISelectionContext | null>(null);
 	const iframeRef = useRef<HTMLIFrameElement | null>(null);
 	const { previewDocument, entries, clearEntries } = usePreviewRunner(
 		code,
@@ -66,6 +69,7 @@ function App() {
 		[removeStaleShareHash, replaceCode],
 	);
 	const aiAssist = useAIAssist(code, handleAIApply);
+	const cancelAIAssist = aiAssist.cancel;
 	const { fileInputRef, fileError, downloadHtml, downloadZip, importFile } =
 		useProjectFiles(code, handleImport);
 
@@ -154,9 +158,33 @@ function App() {
 			);
 		}
 	};
-	const latestPreviewError = [...entries]
-		.reverse()
-		.find((entry) => entry.level === "error")?.message;
+	const latestPreviewIssue = useMemo(() => {
+		const entry = [...entries]
+			.reverse()
+			.find(
+				(candidate) =>
+					candidate.level === "error" || candidate.level === "warn",
+			);
+		return entry
+			? {
+					issueLevel: entry.level as "warn" | "error",
+					issueMessage: entry.message,
+				}
+			: undefined;
+	}, [entries]);
+	const openAIForSelection = useCallback(
+		(context: AISelectionContext) => {
+			cancelAIAssist();
+			setAIContext(context);
+			setIsAIPanelOpen(true);
+		},
+		[cancelAIAssist],
+	);
+	const closeAIPanel = useCallback(() => {
+		cancelAIAssist();
+		setIsAIPanelOpen(false);
+		setAIContext(null);
+	}, [cancelAIAssist]);
 
 	return (
 		<ImagePreloader images={imageSources}>
@@ -177,14 +205,6 @@ function App() {
 						</span>
 						<button type="button" onClick={handleShare}>
 							Share
-						</button>
-						<button
-							type="button"
-							aria-expanded={isAIPanelOpen}
-							aria-controls="ai-assistant-panel"
-							onClick={() => setIsAIPanelOpen((open) => !open)}
-						>
-							AI assistant
 						</button>
 						<button
 							type="button"
@@ -296,6 +316,8 @@ function App() {
 								animationQueue={pane.animation}
 								theme={theme}
 								flexWeight={paneLayout.sizes[index] ?? 1}
+								issue={latestPreviewIssue}
+								onAISelection={openAIForSelection}
 							/>
 							{index < 2 && (
 								<div
@@ -354,20 +376,35 @@ function App() {
 						/>
 					</div>
 				</section>
-				{isAIPanelOpen && (
+				{isAIPanelOpen && aiContext && (
 					<Suspense
-						fallback={<p className="ai-loading">Loading AI assistant…</p>}
+						fallback={
+							<div className="ai-modal-loading">Loading AI assistant…</div>
+						}
 					>
 						<AIAssistantPanel
 							code={code}
+							context={aiContext}
 							state={aiAssist.state}
-							onExplain={() => aiAssist.run("explain", latestPreviewError)}
-							onSuggestFix={() => aiAssist.run("fix", latestPreviewError)}
+							onExplain={() =>
+								aiAssist.run(
+									"explain",
+									`${aiContext.issueLevel}: ${aiContext.issueMessage}`,
+									aiContext,
+								)
+							}
+							onSuggestFix={() =>
+								aiAssist.run(
+									"fix",
+									`${aiContext.issueLevel}: ${aiContext.issueMessage}`,
+									aiContext,
+								)
+							}
 							onCancel={aiAssist.cancel}
 							onRetry={aiAssist.retry}
 							onAccept={aiAssist.acceptSuggestion}
 							onReject={aiAssist.rejectSuggestion}
-							onClose={() => setIsAIPanelOpen(false)}
+							onClose={closeAIPanel}
 						/>
 					</Suspense>
 				)}
