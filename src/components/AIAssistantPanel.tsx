@@ -5,6 +5,7 @@ import type {
 } from "../types/ai";
 import type { EditorCode } from "../types/editor";
 import type { PointerEvent } from "react";
+import { useMemo, useState } from "react";
 
 interface AIAssistantPanelProps {
 	code: EditorCode;
@@ -43,8 +44,22 @@ export default function AIAssistantPanel({
 	onReject,
 	onClose,
 }: AIAssistantPanelProps) {
+	const [selectedFile, setSelectedFile] = useState<keyof EditorCode>(
+		context.language,
+	);
+	const [showSuggestedCode, setShowSuggestedCode] = useState(true);
 	const isActive = state.status === "loading" || state.status === "streaming";
 	const line = context.selectedCode || "No code selection";
+	// Keep the file tabs stable while the streamed suggestion is unchanged.
+	const changedFiles = useMemo(() => {
+		if (!state.suggestion) return [];
+		return (Object.keys(state.suggestion) as Array<keyof EditorCode>).filter(
+			(file) => state.suggestion?.[file] !== code[file],
+		);
+	}, [code, state.suggestion]);
+	const activeFile = changedFiles.includes(selectedFile)
+		? selectedFile
+		: (changedFiles[0] ?? context.language);
 	return (
 		<aside
 			id="ai-assistant-panel"
@@ -193,31 +208,76 @@ export default function AIAssistantPanel({
 						className="flex flex-col gap-gutter-sm"
 						aria-label="Suggested code diff"
 					>
-						<p className="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant">
+						<p className="rounded-md border border-light-outline bg-light-surface-container p-gutter-md font-body text-body-md dark:border-dark-outline dark:bg-dark-surface-container">
 							{state.suggestion.summary}
 						</p>
-						<div className="overflow-hidden rounded-md border border-light-outline font-code text-code-sm dark:border-dark-outline">
-							<div className="border-b border-light-outline bg-error/10 px-gutter-md py-1 text-error dark:border-dark-outline">
-								− Current project
-							</div>
-							<pre className="max-h-32 overflow-auto whitespace-pre-wrap break-all px-gutter-md py-1 text-light-on-surface-variant dark:text-dark-on-surface-variant">
-								{JSON.stringify(code, null, 2)}
-							</pre>
-							<div className="border-y border-light-outline bg-success/10 px-gutter-md py-1 text-success dark:border-dark-outline">
-								+ Suggested project
-							</div>
-							<pre className="max-h-32 overflow-auto whitespace-pre-wrap break-all px-gutter-md py-1 text-light-on-surface-variant dark:text-dark-on-surface-variant">
-								{JSON.stringify(
-									{
-										html: state.suggestion.html,
-										css: state.suggestion.css,
-										javascript: state.suggestion.javascript,
-									},
-									null,
-									2,
-								)}
-							</pre>
-						</div>
+						{changedFiles.length > 0 ? (
+							<>
+								<div
+									className="flex flex-wrap gap-1"
+									role="tablist"
+									aria-label="Changed files"
+								>
+									{changedFiles.map((file) => (
+										<button
+											key={file}
+											type="button"
+											role="tab"
+											aria-selected={activeFile === file}
+											className={`rounded px-gutter-md py-1 font-code text-code-sm ${activeFile === file ? "bg-light-primary text-light-on-primary dark:bg-dark-primary dark:text-dark-on-primary" : "bg-light-surface-container-high text-light-on-surface-variant dark:bg-dark-surface-container-high dark:text-dark-on-surface-variant"}`}
+											onClick={() => setSelectedFile(file)}
+										>
+											{file === "javascript"
+												? "script.js"
+												: file === "html"
+													? "index.html"
+													: "styles.css"}
+										</button>
+									))}
+								</div>
+								<div className="flex items-center justify-between gap-gutter-sm">
+									<p className="font-label text-label-md text-light-on-surface-variant dark:text-dark-on-surface-variant">
+										{showSuggestedCode ? "Suggested code" : "Current code"}
+									</p>
+									<div
+										className="flex rounded-md border border-light-outline p-0.5 dark:border-dark-outline"
+										aria-label="Code version"
+									>
+										<button
+											type="button"
+											aria-pressed={!showSuggestedCode}
+											className={`rounded px-gutter-sm py-1 font-label text-label-sm ${!showSuggestedCode ? "bg-light-surface-container-high dark:bg-dark-surface-container-high" : ""}`}
+											onClick={() => setShowSuggestedCode(false)}
+										>
+											Current
+										</button>
+										<button
+											type="button"
+											aria-pressed={showSuggestedCode}
+											className={`rounded px-gutter-sm py-1 font-label text-label-sm ${showSuggestedCode ? "bg-success/15 text-success" : ""}`}
+											onClick={() => setShowSuggestedCode(true)}
+										>
+											Suggested
+										</button>
+									</div>
+								</div>
+								<pre
+									className="max-h-80 min-h-32 overflow-auto rounded-md border border-light-outline bg-light-surface-container p-gutter-md font-code text-code-sm leading-relaxed text-light-on-surface dark:border-dark-outline dark:bg-dark-surface-container dark:text-dark-on-surface"
+									role="tabpanel"
+									aria-label={`${activeFile} ${showSuggestedCode ? "suggested" : "current"} code`}
+								>
+									<code>
+										{showSuggestedCode
+											? state.suggestion[activeFile]
+											: code[activeFile]}
+									</code>
+								</pre>
+							</>
+						) : (
+							<p className="rounded-md border border-light-outline p-gutter-md font-body text-body-md text-light-on-surface-variant dark:border-dark-outline dark:text-dark-on-surface-variant">
+								No code changes were suggested.
+							</p>
+						)}
 						<div className="flex items-center gap-gutter-sm pt-gutter-xs">
 							<button
 								type="button"
