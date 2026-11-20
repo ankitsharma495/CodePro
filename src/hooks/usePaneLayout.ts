@@ -24,7 +24,7 @@ export default function usePaneLayout(layout: LayoutDirection) {
 		return vertical
 			? {
 					gridTemplateColumns: "minmax(0, 1fr)",
-					gridTemplateRows: panes.join(" 8px "),
+					gridTemplateRows: panes.join(" 6px "),
 				}
 			: {
 					gridTemplateColumns: panes.join(" 8px "),

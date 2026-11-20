@@ -19,6 +19,7 @@ export default function useTheme() {
 
 	useEffect(() => {
 		document.documentElement.dataset.theme = theme;
+		document.documentElement.classList.toggle("dark", theme === "dark");
 		try {
 			window.localStorage.setItem(THEME_KEY, theme);
 		} catch {
