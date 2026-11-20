@@ -307,6 +307,126 @@ a:focus-visible {
 	word-break: break-word;
 }
 
+.ai-panel {
+	margin: 0.5rem 0.65rem;
+	padding: 0.8rem;
+	border: 1px solid var(--surface-border);
+	border-radius: 0.45rem;
+	background: var(--surface);
+}
+
+.ai-panel-header,
+.ai-actions,
+.ai-diff-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.ai-panel-header {
+	justify-content: space-between;
+}
+
+.ai-panel h2,
+.ai-panel h3,
+.ai-panel p {
+	margin-top: 0;
+}
+
+.ai-panel-header p,
+.ai-status {
+	margin-bottom: 0.6rem;
+	color: var(--muted);
+}
+
+.ai-actions button,
+.ai-error button,
+.ai-diff-actions button,
+.ai-panel-header button {
+	min-height: 2.2rem;
+	padding: 0.4rem 0.75rem;
+	border: 1px solid var(--surface-border);
+	border-radius: 0.35rem;
+	background: var(--app-background);
+	color: inherit;
+	cursor: pointer;
+}
+
+.ai-actions button:disabled {
+	cursor: wait;
+	opacity: 0.6;
+}
+
+.ai-error {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.6rem;
+	border: 1px solid #b94b4b;
+	border-radius: 0.35rem;
+	color: #ff8d8d;
+}
+
+.ai-error p {
+	margin: 0;
+}
+
+.ai-response {
+	max-width: 80ch;
+	line-height: 1.55;
+	white-space: pre-wrap;
+}
+
+.ai-streaming-response {
+	max-height: 20rem;
+	overflow: auto;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.ai-diff {
+	margin-top: 0.75rem;
+}
+
+.ai-diff-columns {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.75rem;
+}
+
+.ai-diff-columns article {
+	min-width: 0;
+	border: 1px solid var(--surface-border);
+	border-radius: 0.35rem;
+}
+
+.ai-diff-columns h3 {
+	margin: 0;
+	padding: 0.5rem;
+	border-bottom: 1px solid var(--surface-border);
+	font-size: 0.9rem;
+}
+
+.ai-diff-columns pre {
+	max-height: 20rem;
+	margin: 0;
+	padding: 0.65rem;
+	overflow: auto;
+	font-size: 0.78rem;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.ai-diff-actions {
+	margin-top: 0.75rem;
+}
+
+.ai-loading {
+	padding: 0.75rem;
+	color: var(--muted);
+}
+
 iframe {
 	border: none;
 }
@@ -474,6 +594,10 @@ iframe {
 
 	.console-entry {
 		grid-template-columns: 4rem 3rem minmax(0, 1fr);
+	}
+
+	.ai-diff-columns {
+		grid-template-columns: 1fr;
 	}
 }
 

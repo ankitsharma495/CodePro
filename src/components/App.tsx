@@ -1,6 +1,15 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import {
+	Fragment,
+	lazy,
+	Suspense,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import Editor from "./Editor";
 import ConsolePanel from "./ConsolePanel";
+import useAIAssist from "../hooks/useAIAssist";
 import useEditorState from "../hooks/useEditorState";
 import usePreviewRunner from "../hooks/usePreviewRunner";
 import useProjectFiles from "../hooks/useProjectFiles";
@@ -9,6 +18,9 @@ import useTheme from "../hooks/useTheme";
 import { encodeShareLink, decodeShareHash } from "../services/shareLink";
 import { imageSources } from "../assets/images";
 import ImagePreloader from "../utilities/ImagePreloader";
+import type { EditorCode } from "../types/editor";
+
+const AIAssistantPanel = lazy(() => import("./AIAssistantPanel"));
 
 type LayoutDirection = "horizontal" | "vertical";
 
@@ -20,6 +32,7 @@ function App() {
 	const [shareNotice, setShareNotice] = useState("");
 	const [shareError, setShareError] = useState("");
 	const [shareUrl, setShareUrl] = useState("");
+	const [isAIPanelOpen, setIsAIPanelOpen] = useState(false);
 	const iframeRef = useRef<HTMLIFrameElement | null>(null);
 	const { previewDocument, entries, clearEntries } = usePreviewRunner(
 		code,
@@ -43,6 +56,16 @@ function App() {
 		},
 		[removeStaleShareHash, replaceCode],
 	);
+	const handleAIApply = useCallback(
+		(suggestion: EditorCode) => {
+			replaceCode(suggestion);
+			setShareUrl("");
+			setShareNotice("");
+			removeStaleShareHash();
+		},
+		[removeStaleShareHash, replaceCode],
+	);
+	const aiAssist = useAIAssist(code, handleAIApply);
 	const { fileInputRef, fileError, downloadHtml, downloadZip, importFile } =
 		useProjectFiles(code, handleImport);
 
@@ -131,6 +154,9 @@ function App() {
 			);
 		}
 	};
+	const latestPreviewError = [...entries]
+		.reverse()
+		.find((entry) => entry.level === "error")?.message;
 
 	return (
 		<ImagePreloader images={imageSources}>
@@ -151,6 +177,14 @@ function App() {
 						</span>
 						<button type="button" onClick={handleShare}>
 							Share
+						</button>
+						<button
+							type="button"
+							aria-expanded={isAIPanelOpen}
+							aria-controls="ai-assistant-panel"
+							onClick={() => setIsAIPanelOpen((open) => !open)}
+						>
+							AI assistant
 						</button>
 						<button
 							type="button"
@@ -320,6 +354,23 @@ function App() {
 						/>
 					</div>
 				</section>
+				{isAIPanelOpen && (
+					<Suspense
+						fallback={<p className="ai-loading">Loading AI assistant…</p>}
+					>
+						<AIAssistantPanel
+							code={code}
+							state={aiAssist.state}
+							onExplain={() => aiAssist.run("explain", latestPreviewError)}
+							onSuggestFix={() => aiAssist.run("fix", latestPreviewError)}
+							onCancel={aiAssist.cancel}
+							onRetry={aiAssist.retry}
+							onAccept={aiAssist.acceptSuggestion}
+							onReject={aiAssist.rejectSuggestion}
+							onClose={() => setIsAIPanelOpen(false)}
+						/>
+					</Suspense>
+				)}
 				<ConsolePanel entries={entries} onClear={clearEntries} />
 			</main>
 		</ImagePreloader>

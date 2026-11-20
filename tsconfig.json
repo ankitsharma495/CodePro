@@ -18,5 +18,5 @@
 		"noUncheckedIndexedAccess": true,
 		"noImplicitOverride": true
 	},
-	"include": ["src", "vite.config.mjs", "vitest.config.ts"]
+	"include": ["src", "api", "vite.config.mjs", "vitest.config.ts"]
 }
