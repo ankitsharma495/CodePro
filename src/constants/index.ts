@@ -11,7 +11,7 @@ export const initialHtmlContent = `<!DOCTYPE html>
   <div class="content">
     <h1>Start Coding</h1>
     <p>Reset the editor by clicking/hovering on the red button</p>
-		<p>Save contents of editor by clicking on the yellow button</p>
+		<p>Changes save automatically. Use each pane's download button to save a file.</p>
   </div>
   <script src="script.js"></script>
 </body>

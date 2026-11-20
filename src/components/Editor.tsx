@@ -5,7 +5,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { html } from "@codemirror/lang-html";
 import { css } from "@codemirror/lang-css";
-import { xcodeDark } from "@uiw/codemirror-theme-xcode";
+import { xcodeDark, xcodeLight } from "@uiw/codemirror-theme-xcode";
 // Icon Imports
 import {
 	ResetIcon,
@@ -19,6 +19,7 @@ import {
 import { EXTENSION_MAP, INITIAL_CONTENT_MAP } from "../constants";
 import { testUserAgentForMobileDevice } from "../utilities/utilFunctions";
 import type { EditorLanguage } from "../types/editor";
+import type { Theme } from "../hooks/useTheme";
 
 // Language configuration for CodeMirror component based on langauage
 const LANG_CONFIG_MAP = {
@@ -33,11 +34,21 @@ interface EditorProps {
 	value: string;
 	onChange: (value: string) => void;
 	animationQueue: number;
+	theme: Theme;
+	flexWeight: number;
 }
 
 // Each pane keeps its CodeMirror instance; memo skips updates when a sibling pane changes.
 export default memo(function Editor(props: EditorProps) {
-	const { language, displayName, value, onChange, animationQueue } = props;
+	const {
+		language,
+		displayName,
+		value,
+		onChange,
+		animationQueue,
+		theme,
+		flexWeight,
+	} = props;
 
 	// Create a BLOB file for making the content in the editor downloadable
 	const file = new Blob([value], { type: `text/${EXTENSION_MAP[language]}` });
@@ -108,6 +119,7 @@ export default memo(function Editor(props: EditorProps) {
 		<div
 			style={{
 				animation: `${animationQueue}s ease-out 0s 1 slideInLeft`,
+				flex: `${flexWeight} 1 0%`,
 			}}
 			className={`editor-container ${openEditor ? "" : "collapsed"}`}
 		>
@@ -202,7 +214,7 @@ export default memo(function Editor(props: EditorProps) {
 				height="100%"
 				className="code-mirror-wrapper"
 				extensions={LANG_CONFIG_MAP[language]}
-				theme={xcodeDark}
+				theme={theme === "dark" ? xcodeDark : xcodeLight}
 				onChange={handleChange}
 			/>
 		</div>
