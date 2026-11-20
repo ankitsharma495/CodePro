@@ -169,6 +169,80 @@ a:focus-visible {
 	background: rgb(17 18 21 / 70%);
 }
 
+.editor-toolbar {
+	position: relative;
+	z-index: 3;
+}
+
+.editor-workspace .editor-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.5rem 0.5rem 0.5rem 1rem;
+	border-top-left-radius: 0.5rem;
+	border-top-right-radius: 0.5rem;
+}
+
+.editor-workspace .editor-title {
+	width: 30%;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.editor-workspace .editor-buttons-container {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 4px;
+}
+
+.editor-workspace .editor-button {
+	margin: 0;
+	padding: 0 2px;
+	border: 0;
+	background: none;
+	cursor: pointer;
+	position: relative;
+}
+
+.editor-workspace .editor-button .editor-icon:active {
+	opacity: 0.7;
+}
+
+.editor-workspace .reset-dropdown {
+	display: none;
+	position: absolute;
+	top: 15px;
+	left: 0;
+	z-index: 1;
+	width: max-content;
+	flex-direction: column;
+	justify-content: space-around;
+	padding: 5px 3px;
+	border-radius: 5%;
+	color: white;
+	background-color: rgb(75 75 75 / 66%);
+	font-size: x-small;
+}
+
+.editor-workspace .reset-dropdown.expanded {
+	display: flex;
+}
+
+.editor-workspace .reset-dropdown-item {
+	padding: 3px 2px;
+	border-radius: 7%;
+}
+
+.editor-workspace .reset-dropdown-item:hover {
+	background-color: rgb(66 203 66 / 80%);
+}
+
+.editor-workspace .reset-dropdown-item:active {
+	background-color: transparent;
+}
+
 .pane-resizer {
 	position: relative;
 	z-index: 2;
@@ -546,7 +620,7 @@ iframe {
 	flex-grow: 1;
 	border-bottom-right-radius: 0.5rem;
 	border-bottom-left-radius: 0.5rem;
-	overflow-y: hidden;
+	overflow: hidden;
 }
 
 .CodeMirror {
